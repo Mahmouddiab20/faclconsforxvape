@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>عرض سعر - Falcons Marketing Agency</title>
+    <title>xvape store - Falcons Marketing Agency</title>
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="logo.PNG">
+    <link rel="shortcut icon" type="image/png" href="logo.PNG">
+    <link rel="apple-touch-icon" href="logo.PNG">
+    <link rel="icon" type="image/png" sizes="32x32" href="logo.PNG">
+    <link rel="icon" type="image/png" sizes="16x16" href="logo.PNG">
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="bootstrap-4.4.1/dist/css/bootstrap.min.css">
     <style>
@@ -59,6 +64,35 @@
             top: 0;
             left: 0;
             animation: fadeIn 1.5s ease forwards;
+        }
+        
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loading-screen.hide {
+            opacity: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .hero-video {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
         }
         
         .hero-overlay {
@@ -324,6 +358,7 @@
             opacity: 0;
             transform: translateY(20px);
             transition: all 0.6s ease;
+            text-align: justify;
         }
         
         .timeline-section.animate {
@@ -489,6 +524,14 @@
 </head>
 <body>
     <div class="quotation-container">
+        <!-- Loading Screen -->
+        <div id="loadingScreen" class="loading-screen">
+            <video id="heroVideo" class="hero-video" muted playsinline>
+                <source src="vid/Generated video 1.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        
         <!-- Hero Section -->
         <div class="hero-section">
             <img src="banner.PNG" alt="Banner" class="banner">
@@ -622,6 +665,96 @@
     <!-- Bootstrap JS -->
     <script src="bootstrap-4.4.1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // ============================================
+        // LOADING SCREEN SETTINGS - يمكنك التحكم هنا
+        // ============================================
+        const LOADING_DURATION = 3; // مدة loading screen بالثواني (غير هذا الرقم)
+        const VIDEO_START_TIME = 2; // من أي ثانية يبدأ الفيديو (غير هذا الرقم)
+        // ============================================
+        
+        // Loading Screen Video Animation
+        const video = document.getElementById('heroVideo');
+        const loadingScreen = document.getElementById('loadingScreen');
+        let reverseInterval = null;
+        
+        function hideLoadingScreen() {
+            if (loadingScreen) {
+                loadingScreen.classList.add('hide');
+                setTimeout(function() {
+                    loadingScreen.style.display = 'none';
+                }, 500);
+            }
+            if (reverseInterval) {
+                clearInterval(reverseInterval);
+            }
+        }
+        
+        function playLoadingVideo() {
+            if (!video || !loadingScreen) {
+                hideLoadingScreen();
+                return;
+            }
+            
+            video.addEventListener('loadedmetadata', function() {
+                const duration = video.duration;
+                
+                // Check if video duration is valid
+                if (!duration || isNaN(duration) || duration < VIDEO_START_TIME) {
+                    hideLoadingScreen();
+                    return;
+                }
+                
+                // Start at specified time
+                const startTime = Math.min(VIDEO_START_TIME, duration - 0.1);
+                video.currentTime = startTime;
+                video.pause();
+                
+                // Calculate frame rate for smooth reverse (30fps)
+                const fps = 30;
+                const interval = 1000 / fps; // ~33ms per frame
+                const totalFrames = Math.floor(fps * LOADING_DURATION); // Use LOADING_DURATION
+                let currentFrame = totalFrames;
+                
+                // Calculate the start time for reverse (from VIDEO_START_TIME backwards)
+                const reverseStartTime = startTime;
+                
+                // Start reverse animation
+                reverseInterval = setInterval(function() {
+                    if (currentFrame <= 0) {
+                        // Finished reversing - hide loading screen
+                        clearInterval(reverseInterval);
+                        hideLoadingScreen();
+                    } else {
+                        // Decrease frame (reverse)
+                        const progress = 1 - (currentFrame / totalFrames);
+                        const targetTime = reverseStartTime - (progress * reverseStartTime);
+                        video.currentTime = Math.max(0, targetTime);
+                        currentFrame--;
+                    }
+                }, interval);
+            });
+            
+            video.addEventListener('error', function(e) {
+                console.error('Video error:', e);
+                hideLoadingScreen();
+            });
+            
+            // Safety timeout - hide after LOADING_DURATION + 1 second
+            setTimeout(function() {
+                hideLoadingScreen();
+            }, (LOADING_DURATION + 1) * 1000);
+            
+            // Ensure video loads
+            video.load();
+        }
+        
+        // Initialize loading video when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', playLoadingVideo);
+        } else {
+            playLoadingVideo();
+        }
+        
         // Scroll animations for cards and sections
         const observerOptions = {
             threshold: 0.1,
